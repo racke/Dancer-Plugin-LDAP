@@ -114,6 +114,8 @@ sub quick_select {
 		my $token = {};
 		my $entry = $mesg->entry($i);
 		
+		$token->{dn} = $entry->dn;
+			
 		for my $attr ( $entry->attributes ) {
 			$token->{$attr} = $entry->get_value($attr);
 		}
