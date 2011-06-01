@@ -120,13 +120,22 @@ register_plugin;
 # Try to establish a LDAP connection based on the given settings
 sub _get_connection {
 	my $settings = shift;
-	my $ldap;
+	my ($ldap, $ldret);
 
 	unless ($ldap = Net::LDAP->new($settings->{uri})) {
 		Dancer::Logger::error('LDAP connection failed - ' . $@);
 		return;
 	}
 
+	$ldret = $ldap->bind($settings->{bind},
+						 password => $settings->{password});
+
+	if ($ldret->code) {
+		Dancer::Logger::error('LDAP bind failed (' . $ldret->code . '): '
+							  . $ldret->error);
+		return;
+	}
+	
 	# pass reference to the settings
 	$ldap->{dancer_settings} = $settings;
 	
