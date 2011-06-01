@@ -172,5 +172,27 @@ sub quick_delete {
 	return 1;
 }
 
+=head2 rebind
+
+Rebind with credentials from settings.
+
+=cut
+
+sub rebind {
+	my ($self) = @_;
+	my ($ldret);
+	
+	$ldret = $self->bind($self->{dancer_settings}->{bind},
+						 password => $self->{dancer_settings}->{password});
+
+	if ($ldret->code) {
+		Dancer::Logger::error('LDAP bind failed (' . $ldret->code . '): '
+							  . $ldret->error);
+		return;
+	}
+
+	return $self;
+}
+
 1;
 
