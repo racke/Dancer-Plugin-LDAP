@@ -26,7 +26,8 @@ sub quick_insert {
 	my ($self, $dn, $ref) = @_;
 	my ($mesg);
 
-	Dancer::Logger::debug("Input for qi, dn: ", $dn, "; data: ", $ref);
+	Dancer::Logger::debug("LDAP insert, dn: ", $dn, "; data: ", $ref);
+	
 	$mesg = $self->add($dn, attr => [%$ref]);
 
 	if ($mesg->code) {
@@ -181,6 +182,8 @@ Rebind with credentials from settings.
 sub rebind {
 	my ($self) = @_;
 	my ($ldret);
+
+	Dancer::Logger::debug("LDAP rebind to $self->{dancer_settings}->{bind}.");
 	
 	$ldret = $self->bind($self->{dancer_settings}->{bind},
 						 password => $self->{dancer_settings}->{password});
