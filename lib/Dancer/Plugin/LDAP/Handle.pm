@@ -47,6 +47,11 @@ The simplest form is to just specify the filter:
 
 This retrieves all records of the object class C<inetOrgPerson>.
 
+A specific record can be fetched by using the distinguished name (DN)
+as only key in the hash reference:
+
+    ldap->quick_select({dn => 'uid=racke@linuxia.de,dc=linuxia,dc=de'});
+
 The base of your search can be passed as first argument, otherwise
 the base defined in your settings will be used.
 
@@ -99,6 +104,12 @@ sub quick_select {
 
 	if (@conds > 1) {
 		$filter = '(&' . join('', @conds) . ')';
+	}
+	elsif (exists $spec_ref->{dn}) {
+		# lookup of distinguished name
+		$filter = '(objectClass=*)';
+		$table = $spec_ref->{dn};
+		push (@_, scope => 'base');
 	}
 	else {
 		$filter = $conds[0];
