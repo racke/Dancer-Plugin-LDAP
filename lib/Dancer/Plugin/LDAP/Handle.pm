@@ -3,6 +3,8 @@ package Dancer::Plugin::LDAP::Handle;
 use strict;
 use Carp;
 use Net::LDAP;
+use Net::LDAP::Util qw(escape_filter_value);
+
 use base qw(Net::LDAP);
 
 our $VERSION = '0.0001';
@@ -68,7 +70,7 @@ e.g.:
 sub quick_select {
 	my ($self) = shift;
 	my ($table, $spec_ref, $mesg, @conds, $filter, $key, $value,
-		@search_args, @results);
+		@search_args, @results, $safe_value);
 
 	if (ref($_[0]) eq 'HASH') {
 		# search specification is first argument
@@ -98,7 +100,9 @@ sub quick_select {
 			}
 		}
 		else {
-			push (@conds, "($key=$value)");
+			# escape filter value first
+			$safe_value = escape_filter_value($value);
+			push (@conds, "($key=$safe_value)");
 		}
 	}
 
