@@ -25,7 +25,7 @@ sub base {
 }
 
 sub quick_insert {
-	my ($self, $dn, $ref) = @_;
+	my ($self, $dn, $ref, %opts) = @_;
 	my ($mesg);
 
 	Dancer::Logger::debug("LDAP insert, dn: ", $dn, "; data: ", $ref);
@@ -33,7 +33,7 @@ sub quick_insert {
 	$mesg = $self->add($dn, attr => [%$ref]);
 
 	if ($mesg->code) {
-		die "LDAP insert failed (" . $mesg->code . ") with " . $mesg->error;
+		return $self->_failure('insert', $mesg, $opts{errors});
 	}
 
 	return $dn;
@@ -210,6 +210,23 @@ sub rebind {
 	}
 
 	return $self;
+}
+
+sub _failure {
+	my ($self, $op, $mesg, $options) = @_;
+
+	if ($options) {
+		if (ref($options) eq 'HASH') {
+			if ($mesg->code == 68) {
+				# "Already exists"
+				if ($options->{exists}) {
+					return;
+				}
+			}
+		}
+	}
+
+	die "LDAP $op failed (" . $mesg->code . ") with " . $mesg->error;
 }
 
 1;
