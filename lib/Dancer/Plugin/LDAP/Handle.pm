@@ -65,12 +65,33 @@ e.g.:
     ldap->quick_select('dc=linuxia,dc=de', {objectClass => 'inetOrgPerson'},
         scope => 'one');
 
+=head3 Attributes
+
+In addition, there is a C<values> option which determines how values
+for LDAP attributes are fetched:
+
+=over 4
+
+=item first
+
+First value of each attribute.
+
+=item last
+
+Last value of each attribute.
+
+=item asref
+
+Values as array reference.
+
+=back
+
 =cut
 
 sub quick_select {
 	my ($self) = shift;
 	my ($table, $spec_ref, $mesg, @conds, $filter, $key, $value,
-		@search_args, @results, $safe_value);
+	    @search_args, @results, $safe_value, %opts, @ldap_args);
 
 	if (ref($_[0]) eq 'HASH') {
 		# search specification is first argument
@@ -81,6 +102,20 @@ sub quick_select {
 	}
 	
 	$spec_ref = shift;
+
+	# check remaining parameters
+	%opts = (values => 'first');
+
+	while (@_ > 0) {
+	    $key = shift;
+
+	    if (exists $opts{$key}) {
+		$opts{$key} = shift;
+	    }
+	    else {
+		push(@ldap_args, $key, shift);
+	    }
+	}
 
 	while (($key, $value) = each(%$spec_ref)) {
 		if (ref($value) eq 'ARRAY') {
@@ -133,7 +168,19 @@ sub quick_select {
 		$token->{dn} = $entry->dn;
 			
 		for my $attr ( $entry->attributes ) {
+		    if ($opts{values} eq 'asref') {
+			# all attribute values as array reference
+			$token->{$attr} = $entry->get_value($attr, asref => 1);
+		    }
+		    elsif ($opts{values} eq 'last') {
+			# last attribute value
+			my $value_ref =  $entry->get_value($attr, asref => 1);
+			$token->{$attr} = defined($value_ref) ? $value_ref->[-1] : undef;
+		    }
+		    else {
+			# first attribute value
 			$token->{$attr} = $entry->get_value($attr);
+		    }
 		}
 		
 		push(@results, $token);
