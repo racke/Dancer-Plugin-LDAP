@@ -156,7 +156,7 @@ sub quick_update {
 	my ($self, $dn, $spec_ref) = @_;
 	my ($mesg);
 
-	Dancer::Logger::debug("Spec ref: " , $spec_ref);
+	Dancer::Logger::debug("LDAP update, dn: ", $dn, "; data: ", $spec_ref);
 	
 	$mesg = $self->modify(dn => $dn, replace => $spec_ref);
 
