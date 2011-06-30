@@ -188,6 +188,27 @@ sub quick_delete {
 	return 1;
 }
 
+=head2 rename $old_dn $new_dn
+
+Change DN of a LDAP record from $old_dn to $new_dn.
+
+=cut
+
+sub rename {
+    my ($self, $old_dn, $new_dn) = @_;
+    my ($ldret);
+
+    Dancer::Logger::debug("LDAP rename from $old_dn to $new_dn.");
+
+    $ldret = $self->moddn ($old_dn, newrdn => $new_dn);
+
+    if ($ldret->code) {
+	return $self->_failure('rename', $ldret);
+    }
+
+    return 1;
+}
+
 =head2 rebind
 
 Rebind with credentials from settings.
