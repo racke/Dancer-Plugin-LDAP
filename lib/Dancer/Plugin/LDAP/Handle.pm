@@ -3,7 +3,7 @@ package Dancer::Plugin::LDAP::Handle;
 use strict;
 use Carp;
 use Net::LDAP;
-use Net::LDAP::Util qw(escape_filter_value);
+use Net::LDAP::Util qw(escape_filter_value ldap_explode_dn);
 
 use base qw(Net::LDAP);
 
@@ -278,6 +278,62 @@ sub rebind {
 	}
 
 	return $self;
+}
+
+=head2 dn_value $dn $pos $attribute
+
+Returns DN attribute value from $dn at position $pos,
+matching attribute name $attribute.
+
+$pos and $attribute are optional.
+
+Returns undef in the following cases:
+
+* invalid DN
+* $pos exceeds number of entries in the DN
+* attribute name doesn't match $attribute
+
+Examples:
+
+    ldap->dn_value('ou=Testing,dc=linuxia,dc=de');
+
+    Testing
+
+    ldap->dn_value('ou=Testing,dc=linuxia,dc=de', 1);
+
+    linuxia
+
+=cut
+
+sub dn_value {
+    my ($self, $dn, $pos, $attribute) = @_;
+    my ($new_ref, $entry);
+
+    $new_ref = ldap_explode_dn($dn);
+    $pos ||= 0;
+
+    unless (defined $new_ref) {
+	return;
+    }
+
+    if ($pos >= @$new_ref) {
+	return;
+    }
+
+    $entry = $new_ref->[$pos];
+
+    if (defined $attribute) {
+	# keys are by default uppercase
+	$attribute = uc($attribute);
+
+	if (exists $entry->{$attribute}) {
+	    return $entry->{$attribute};
+	}
+
+	return;
+    }
+
+    return $entry->{values(%$entry)->[0]};
 }
 
 sub _failure {
