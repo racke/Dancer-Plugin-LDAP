@@ -3,7 +3,7 @@ package Dancer::Plugin::LDAP::Handle;
 use strict;
 use Carp;
 use Net::LDAP;
-use Net::LDAP::Util qw(escape_filter_value ldap_explode_dn);
+use Net::LDAP::Util qw(escape_dn_value escape_filter_value ldap_explode_dn);
 
 use base qw(Net::LDAP);
 
@@ -195,6 +195,55 @@ sub quick_select {
 	}
 }
 
+=head2 quick_compare $type $a $b $pos
+
+=cut
+
+sub quick_compare {
+    my ($type, $a, $b, $pos) = @_;
+
+    if ($type eq 'dn') {
+	# explode both distinguished names
+	my ($dn_a, $dn_b, $href_a, $href_b, $cmp);
+
+	$dn_a = ldap_explode_dn($dn_a);
+	$dn_b = ldap_explode_dn($dn_b);
+
+	if (@$dn_a > @$dn_b) {
+	    return 1;
+	}
+	elsif (@$dn_a < @$dn_b) {
+	    return -1;
+	}
+
+	# check entries, starting from $pos
+	$pos ||= 0;
+
+	for (my $i = $pos; $i < @$dn_a; $i++) {
+	    $href_a = $dn_a->[$i];
+	    $href_b = $dn_b->[$i];
+
+	    for my $k (keys %$href_a) {
+		unless (exists($href_b->{$k})) {
+		    return 1;
+		}
+		
+		if ($cmp = $href_a->{$k} cmp $href_b->{$k}) {
+		    return $cmp;
+		}
+
+		delete $href_b->{$k};
+	    }
+
+	    if (keys %$href_b) {
+		return -1;
+	    }
+	}
+
+	return 0;
+    }
+}
+
 =head2 quick_update $dn $replace
 
 =cut
@@ -243,17 +292,41 @@ Change DN of a LDAP record from $old_dn to $new_dn.
 
 sub rename {
     my ($self, $old_dn, $new_dn) = @_;
-    my ($ldret);
+    my ($ldret, $old_ref, $new_ref, $rdn, $new_rdn, $superior, $ret);
 
-    Dancer::Logger::debug("LDAP rename from $old_dn to $new_dn.");
+    $old_ref = $self->dn_split($old_dn, hash => 1);
+    $new_ref = $self->dn_split($new_dn, hash => 1);
 
-    $ldret = $self->moddn ($old_dn, newrdn => $new_dn);
+    if (@$new_ref == 1) {
+	# got already relative DN
+	$new_rdn = $new_dn;
+    }
+    else {
+	# relative DN is first
+	$rdn = shift @$new_ref;
+
+	# check if it needs to move in the tree
+	if ($self->compare($old_dn, $new_dn, 1)) {
+	    die "Different LDAP trees.";
+	}
+
+	$new_rdn = join('+', map {$_=$rdn->{$_}} keys %$rdn);
+    }
+
+    Dancer::Logger::debug("LDAP rename from $old_dn to $new_rdn.");
+
+    # change distinguished name
+    $ldret = $self->moddn ($old_dn, newrdn => $new_rdn);
 
     if ($ldret->code) {
 	return $self->_failure('rename', $ldret);
     }
 
-    return 1;
+    # change attribute
+ #   return $self->quick_update('');
+
+    shift @$old_ref;
+    return $self->dn_join($new_rdn, @$old_ref);
 }
 
 =head2 rebind
@@ -278,6 +351,49 @@ sub rebind {
 	}
 
 	return $self;
+}
+
+=head2 dn_split $dn %options
+
+=cut
+
+sub dn_split {
+    my ($self, $dn, %options) = @_;
+    my ($dn_ref, @out);
+
+    $dn_ref = ldap_explode_dn($dn);
+    Dancer::Logger::debug("Result for $dn: ", $dn_ref || 'N/A');
+    if ($options{hash}) {
+	return $dn_ref;
+    }
+    
+    for my $rdn (@$dn_ref) {
+	push (@out, join '+', 
+	      map {$_ = escape_dn_value($rdn->{$_})} keys %$rdn);
+    }
+
+    return join(',', @out);
+}
+
+=head2 dn_join $rdn1 $rdn2 ...
+
+=cut
+
+sub dn_join {
+    my ($self, @rdn_list) = @_;
+    my (@out);
+
+    for my $rdn (@rdn_list) {
+	if (ref($rdn) eq 'HASH') {
+	    push (@out, join '+', 
+		  map {"$_ =" . escape_dn_value($rdn->{$_})} keys %$rdn);
+	}
+	else {
+	    push (@out, $rdn);
+	}
+    }
+
+    return join(',', @out);
 }
 
 =head2 dn_value $dn $pos $attribute
