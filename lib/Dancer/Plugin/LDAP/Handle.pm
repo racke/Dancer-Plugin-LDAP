@@ -13,17 +13,6 @@ our $VERSION = '0.0001';
 
 =cut
 
-sub base {
-	my $self = shift;
-
-	if (@_) {
-		# prepend path
-		return join(',', @_, $self->{dancer_settings}->{base});
-	}
-
-	return $self->{dancer_settings}->{base};
-}
-
 sub quick_insert {
 	my ($self, $dn, $ref, %opts) = @_;
 	my ($mesg);
@@ -327,6 +316,27 @@ sub rename {
 
     shift @$old_ref;
     return $self->dn_join($new_rdn, @$old_ref);
+}
+
+=head2 base @rdn
+
+Returns base DN, optionally prepending relative DN from @rdn.
+
+    ldap->base
+
+    ldap->base('uid=racke@linuxia.de');
+
+=cut
+
+sub base {
+    my $self = shift;
+
+    if (@_) {
+	# prepend path
+	return join(',', @_, $self->{dancer_settings}->{base});
+    }
+
+    return $self->{dancer_settings}->{base};
 }
 
 =head2 rebind
