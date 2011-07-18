@@ -13,21 +13,6 @@ our $VERSION = '0.0001';
 
 =cut
 
-sub quick_insert {
-	my ($self, $dn, $ref, %opts) = @_;
-	my ($mesg);
-
-	Dancer::Logger::debug("LDAP insert, dn: ", $dn, "; data: ", $ref);
-	
-	$mesg = $self->add($dn, attr => [%$ref]);
-
-	if ($mesg->code) {
-		return $self->_failure('insert', $mesg, $opts{errors});
-	}
-
-	return $dn;
-}
-
 =head2 quick_select
 
 quick_select performs a search in the LDAP directory.
@@ -182,6 +167,37 @@ sub quick_select {
 	else {
 		return $results[0];
 	}
+}
+
+=head2 quick_insert $dn $ref %opts
+
+Adds an entry to LDAP directory.
+
+    ldap->quick_insert('uid=racke@linuxia.de,ou=people,dc=linuxia,dc=de',
+        {cn => 'racke@linuxia.de',
+         uid => 'racke@linuxia.de',
+         givenName = 'Stefan',
+         sn => 'Hornburg',
+         c => 'Germany',
+         l => 'Wedemark',
+         objectClass => [qw/top person organizationalPerson inetOrgPerson/],
+        }
+
+=cut
+
+sub quick_insert {
+    my ($self, $dn, $ref, %opts) = @_;
+    my ($mesg);
+
+    Dancer::Logger::debug("LDAP insert, dn: ", $dn, "; data: ", $ref);
+	
+    $mesg = $self->add($dn, attr => [%$ref]);
+
+    if ($mesg->code) {
+	return $self->_failure('insert', $mesg, $opts{errors});
+    }
+
+    return $dn;
 }
 
 =head2 quick_compare $type $a $b $pos
