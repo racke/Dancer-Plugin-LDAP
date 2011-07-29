@@ -9,6 +9,12 @@ use base qw(Net::LDAP);
 
 our $VERSION = '0.0001';
 
+=head1 DN
+
+Our methods return and expect unescaped DN's.
+
+=cut
+
 =head1 METHODS
 
 =cut
