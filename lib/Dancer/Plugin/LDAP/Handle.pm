@@ -139,8 +139,8 @@ sub quick_select {
 		my $token = {};
 		my $entry = $mesg->entry($i);
 		
-		$token->{dn} = $entry->dn;
-			
+		$token->{dn} = $self->dn_unescape($entry->dn);
+
 		for my $attr ( $entry->attributes ) {
 		    if ($opts{values} eq 'asref') {
 			# all attribute values as array reference
@@ -394,8 +394,13 @@ sub dn_split {
     }
     
     for my $rdn (@$dn_ref) {
-	push (@out, join '+', 
-	      map {$_ = escape_dn_value($rdn->{$_})} keys %$rdn);
+	if ($options{raw}) {
+	    push (@out, join '+', map {"$_=$rdn->{$_}"} keys %$rdn);
+	}
+	else {
+	    push (@out, join '+', 
+		  map {$_ = escape_dn_value($rdn->{$_})} keys %$rdn);
+	}
     }
 
     return join(',', @out);
@@ -420,6 +425,18 @@ sub dn_join {
     }
 
     return join(',', @out);
+}
+
+=head2 dn_unescape $dn
+
+Unescapes values in DN and returns the altered string.
+
+=cut
+
+sub dn_unescape {
+    my ($self, $dn) = @_;
+
+    return $self->dn_split($dn, raw => 1);
 }
 
 =head2 dn_value $dn $pos $attribute
