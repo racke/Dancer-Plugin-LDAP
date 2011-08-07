@@ -135,6 +135,8 @@ sub quick_select {
 	}
 
 	# compose search parameters
+	$table = $self->dn_escape($table);
+
 	@search_args = (base => $table, filter => $filter, @_);
 
 	Dancer::Logger::debug('LDAP search: ', \@search_args);
@@ -194,6 +196,9 @@ Adds an entry to LDAP directory.
 sub quick_insert {
     my ($self, $dn, $ref, %opts) = @_;
     my ($mesg);
+
+    # escape DN
+    $dn = $self->dn_escape($dn);
 
     Dancer::Logger::debug("LDAP insert, dn: ", $dn, "; data: ", $ref);
 	
@@ -263,6 +268,9 @@ sub quick_update {
 	my ($self, $dn, $spec_ref) = @_;
 	my ($mesg);
 
+  # escape DN
+    $dn = $self->dn_escape($dn);
+
 	Dancer::Logger::debug("LDAP update, dn: ", $dn, "; data: ", $spec_ref);
 	
 	$mesg = $self->modify(dn => $dn, replace => $spec_ref);
@@ -283,6 +291,9 @@ Deletes entry given by distinguished name $dn.
 sub quick_delete {
 	my ($self, $dn) = @_;
 	my ($ldret);
+
+  # escape DN
+    $dn = $self->dn_escape($dn);
 
 	Dancer::Logger::debug("LDAP delete: ", $dn);
 
@@ -391,25 +402,41 @@ sub rebind {
 
 sub dn_split {
     my ($self, $dn, %options) = @_;
-    my ($dn_ref, @out);
+    my (@frags, @dn_parts, @out, @tmp, $buf, $value);
 
-    $dn_ref = ldap_explode_dn($dn);
-    Dancer::Logger::debug("Result for $dn: ", $dn_ref || 'N/A');
-    if ($options{hash}) {
-	return $dn_ref;
-    }
-    
-    for my $rdn (@$dn_ref) {
-	if ($options{raw}) {
-	    push (@out, join '+', map {"$_=$rdn->{$_}"} keys %$rdn);
-	}
-	else {
-	    push (@out, join '+', 
-		  map {$_ = escape_dn_value($rdn->{$_})} keys %$rdn);
-	}
+    # break DN up with regular expresssions
+    @frags = reverse(split(/,/, $dn));
+
+    $buf = '';
+
+    for my $f (@frags) {
+	@tmp = split(/=/, $f);
+
+        if ($buf) {
+	    $value = "$tmp[1],$buf";
+        }
+        elsif (@tmp > 1) {
+            $value = $tmp[1];
+        }
+        else {
+            $value = $tmp[0];
+        }
+
+        if (@tmp > 1) {
+            if ($options{raw}) {
+	    unshift @dn_parts, "$tmp[0]=" . $value;
+            }
+            else {
+	    unshift @dn_parts, "$tmp[0]=" . escape_dn_value($value);
+            }
+            $buf = '';
+        }
+        else {
+            $buf = $value;
+        }
     }
 
-    return join(',', @out);
+    return join(',', @dn_parts);
 }
 
 =head2 dn_join $rdn1 $rdn2 ...
@@ -423,7 +450,7 @@ sub dn_join {
     for my $rdn (@rdn_list) {
 	if (ref($rdn) eq 'HASH') {
 	    push (@out, join '+', 
-		  map {"$_ =" . escape_dn_value($rdn->{$_})} keys %$rdn);
+		  map {"$_=" . $rdn->{$_}} keys %$rdn);
 	}
 	else {
 	    push (@out, $rdn);
@@ -431,6 +458,18 @@ sub dn_join {
     }
 
     return join(',', @out);
+}
+
+=head2 dn_escape $dn
+
+Escapes values in DN and returns the altered string.
+
+=cut
+
+sub dn_escape {
+    my ($self, $dn) = @_;
+
+    return $self->dn_split($dn);    
 }
 
 =head2 dn_unescape $dn
@@ -441,8 +480,11 @@ Unescapes values in DN and returns the altered string.
 
 sub dn_unescape {
     my ($self, $dn) = @_;
+    my ($dn_ref);
 
-    return $self->dn_split($dn, raw => 1);
+    $dn_ref = ldap_explode_dn($dn);
+
+    return $self->dn_join(@$dn_ref);
 }
 
 =head2 dn_value $dn $pos $attribute
