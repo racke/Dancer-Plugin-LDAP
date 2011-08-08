@@ -314,7 +314,8 @@ Change DN of a LDAP record from $old_dn to $new_dn.
 
 sub rename {
     my ($self, $old_dn, $new_dn) = @_;
-    my ($ldret, $old_ref, $new_ref, $rdn, $new_rdn, $superior, $ret);
+    my ($ldret, $old_ref, $new_ref, $rdn, $new_rdn, $superior, $ret,
+	$old_escaped);
 
     $old_ref = $self->dn_split($old_dn, hash => 1);
     $new_ref = $self->dn_split($new_dn, hash => 1);
@@ -335,10 +336,12 @@ sub rename {
 	$new_rdn = join('+', map {$_=$rdn->{$_}} keys %$rdn);
     }
 
-    Dancer::Logger::debug("LDAP rename from $old_dn to $new_rdn.");
+    $old_escaped = $self->dn_join(@$old_ref);
+
+    Dancer::Logger::debug("LDAP rename from $old_escaped to $new_rdn.");
 
     # change distinguished name
-    $ldret = $self->moddn ($old_dn, newrdn => $new_rdn);
+    $ldret = $self->moddn ($old_escaped, newrdn => $new_rdn);
 
     if ($ldret->code) {
 	return $self->_failure('rename', $ldret);
@@ -434,6 +437,10 @@ sub dn_split {
         else {
             $buf = $value;
         }
+    }
+
+    if ($options{hash}) {
+	return \@dn_parts;
     }
 
     return join(',', @dn_parts);
