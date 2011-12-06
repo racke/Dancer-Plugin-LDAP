@@ -129,7 +129,7 @@ sub _get_connection {
 	my ($ldap, $ldret);
 
 	unless ($ldap = Net::LDAP->new($settings->{uri})) {
-		Dancer::Logger::error('LDAP connection failed - ' . $@);
+		Dancer::Logger::error("LDAP connection to $settings->{uri} failed: " . $@);
 		return;
 	}
 
