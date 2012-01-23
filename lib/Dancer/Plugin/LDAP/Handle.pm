@@ -332,14 +332,14 @@ sub rename {
 	$rdn = shift @$new_ref;
 
 	# check if it needs to move in the tree
-	if ($self->compare($old_dn, $new_dn, 1)) {
-	    die "Different LDAP trees.";
-	}
+#	if ($self->compare($old_dn, $new_dn, 1)) {
+#	    die "Different LDAP trees.";
+#	}
 
 	$new_rdn = join('+', map {$_=$rdn->{$_}} keys %$rdn);
     }
 
-    $old_escaped = $self->dn_join(@$old_ref);
+    $old_escaped = join(',', @$old_ref);
 
     Dancer::Logger::debug("LDAP rename from $old_escaped to $new_rdn.");
 
@@ -354,7 +354,7 @@ sub rename {
  #   return $self->quick_update('');
 
     shift @$old_ref;
-    return $self->dn_join($new_rdn, @$old_ref);
+    return $self->dn_unescape(join(',', $new_rdn, @$old_ref));
 }
 
 =head2 base @rdn
