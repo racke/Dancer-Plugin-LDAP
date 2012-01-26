@@ -23,15 +23,20 @@ our $VERSION = '0.0001';
 
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
-
-Perhaps a little code snippet.
-
-    use Dancer::Plugin;
+    use Dancer;
     use Dancer::Plugin::LDAP;
 
-    my $foo = Dancer::Plugin::LDAP->new();
-    ...
+    # Calling the ldap keyword returns you a LDAP handle
+    
+=head1 DESCRIPTION
+
+Provides an easy way to obtain a connected LDAP handle by simply calling
+the ldap keyword within your L<Dancer> application.
+
+Returns a L<Dancer::Plugin::LDAP::Handle> object, which is a subclass of
+a L<Net::LDAP> handle object, so it does everything you'd expect
+to do with Net::LDAP, but also adds a few convenience methods.  See the documentation
+for L<Dancer::Plugin::LDAP::Handle> for full details of those.
 
 =head1 CONFIGURATION
 
@@ -236,13 +241,11 @@ L<http://search.cpan.org/dist/Dancer-Plugin-LDAP/>
 
 =back
 
-
-=head1 ACKNOWLEDGEMENTS
-
+You can find the author on IRC in the channel C<#dancer> on <irc.perl.org>.
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2011 Stefan Hornburg (Racke).
+Copyright 2011-2012 Stefan Hornburg (Racke).
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of either: the GNU General Public License as published
@@ -250,6 +253,11 @@ by the Free Software Foundation; or the Artistic License.
 
 See http://dev.perl.org/licenses/ for more information.
 
+=head1 SEE ALSO
+
+L<Dancer>
+
+L<Net::LDAP>
 
 =cut
 

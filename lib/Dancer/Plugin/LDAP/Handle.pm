@@ -9,9 +9,11 @@ use base qw(Net::LDAP);
 
 our $VERSION = '0.0001';
 
-=head1 DN
+=head1 NAME
 
-Our methods return and expect unescaped DN's.
+Dancer::Plugin::LDAP::Handle - subclassed Net::LDAP object
+
+=head1 SYNOPSIS
 
 =cut
 
@@ -69,119 +71,90 @@ Values as array reference.
 =cut
 
 sub quick_select {
-	my ($self) = shift;
-	my ($table, $spec_ref, $mesg, @conds, $filter, $key, $value,
-	    @search_args, @results, $safe_value, %opts, @ldap_args);
+    my ($self) = shift;
+    my ($table, $spec_ref, $mesg, @conds, $filter, $key,
+	@search_args, @results, %opts, @ldap_args);
 
-	if (ref($_[0]) eq 'HASH') {
-		# search specification is first argument
-		$table = $self->base();
+    if (ref($_[0]) eq 'HASH') {
+	# search specification is first argument
+	$table = $self->base();
+    }
+    else {
+	$table = shift;
+    }
+	
+    $spec_ref = shift;
+
+    # check remaining parameters
+    %opts = (values => 'first');
+
+    while (@_ > 0) {
+	$key = shift;
+	
+	if (exists $opts{$key}) {
+	    $opts{$key} = shift;
 	}
 	else {
-		$table = shift;
+	    push(@ldap_args, $key, shift);
 	}
+    }
+
+    @conds = $self->_build_conditions($spec_ref);
+
+    if (@conds > 1) {
+	$filter = '(&' . join('', @conds) . ')';
+    }
+    elsif (exists $spec_ref->{dn}) {
+	# lookup of distinguished name
+	$filter = '(objectClass=*)';
+	$table = $spec_ref->{dn};
+	push (@_, scope => 'base');
+    }
+    else {
+	$filter = $conds[0];
+    }
+
+    # compose search parameters
+    $table = $self->dn_escape($table);
+    
+    @search_args = (base => $table, filter => $filter, @_);
+
+    Dancer::Logger::debug('LDAP search: ', \@search_args);
 	
-	$spec_ref = shift;
+    $mesg = $self->search(@search_args);
 
-	# check remaining parameters
-	%opts = (values => 'first');
-
-	while (@_ > 0) {
-	    $key = shift;
-
-	    if (exists $opts{$key}) {
-		$opts{$key} = shift;
+    foreach (my $i = 0; $i < $mesg->count; $i++) {
+	my $token = {};
+	my $entry = $mesg->entry($i);
+	
+	$token->{dn} = $self->dn_unescape($entry->dn);
+	
+	for my $attr ( $entry->attributes ) {
+	    if ($opts{values} eq 'asref') {
+		# all attribute values as array reference
+		$token->{$attr} = $entry->get_value($attr, asref => 1);
+	    }
+	    elsif ($opts{values} eq 'last') {
+		# last attribute value
+		my $value_ref =  $entry->get_value($attr, asref => 1);
+		$token->{$attr} = defined($value_ref) ? $value_ref->[-1] : undef;
 	    }
 	    else {
-		push(@ldap_args, $key, shift);
+		# first attribute value
+		$token->{$attr} = $entry->get_value($attr);
 	    }
 	}
-
-	while (($key, $value) = each(%$spec_ref)) {
-		if (ref($value) eq 'ARRAY') {
-			# Operator requested
-			if ($value->[0] eq 'exists') {
-				if ($value->[1]) {
-					# attribute present
-					push (@conds, "($key=*)");
-				}
-				else {
-					# attribute missing
-					push (@conds, "(!($key=*))");
-				}
-			}
-			elsif ($value->[0] eq '!' || $value->[0] eq 'not') {
-			    push (@conds, "(!($key=$value->[1]))");
-			}
-			elsif ($value->[0] eq 'substr'
-			       || $value->[0] eq 'substring') {
-			    push (@conds, "($key=*" . escape_filter_value($value->[1]) . "*)");
-			}
-			else {
-				die "Invalid operator $value->[0].";
-			}
-		}
-		else {
-			# escape filter value first
-			$safe_value = escape_filter_value($value);
-			push (@conds, "($key=$safe_value)");
-		}
-	}
-
-	if (@conds > 1) {
-		$filter = '(&' . join('', @conds) . ')';
-	}
-	elsif (exists $spec_ref->{dn}) {
-		# lookup of distinguished name
-		$filter = '(objectClass=*)';
-		$table = $spec_ref->{dn};
-		push (@_, scope => 'base');
-	}
-	else {
-		$filter = $conds[0];
-	}
-
-	# compose search parameters
-	$table = $self->dn_escape($table);
-
-	@search_args = (base => $table, filter => $filter, @_);
-
-	Dancer::Logger::debug('LDAP search: ', \@search_args);
+		
+	push(@results, $token);
 	
-	$mesg = $self->search(@search_args);
+    }
 
-	foreach (my $i = 0; $i < $mesg->count; $i++) {
-		my $token = {};
-		my $entry = $mesg->entry($i);
-		
-		$token->{dn} = $self->dn_unescape($entry->dn);
-
-		for my $attr ( $entry->attributes ) {
-		    if ($opts{values} eq 'asref') {
-			# all attribute values as array reference
-			$token->{$attr} = $entry->get_value($attr, asref => 1);
-		    }
-		    elsif ($opts{values} eq 'last') {
-			# last attribute value
-			my $value_ref =  $entry->get_value($attr, asref => 1);
-			$token->{$attr} = defined($value_ref) ? $value_ref->[-1] : undef;
-		    }
-		    else {
-			# first attribute value
-			$token->{$attr} = $entry->get_value($attr);
-		    }
-		}
-		
-		push(@results, $token);
-
-	}
-
-	if (wantarray) {
-		return @results;
-	}
-	else {
-		return $results[0];
-	}
+    if (wantarray) {
+	return @results;
+    }
+    else {
+	return $results[0];
+    }
 }
 
 =head2 quick_insert $dn $ref %opts
@@ -267,26 +240,29 @@ sub quick_compare {
     }
 }
 
-=head2 quick_update $dn $replace
+=head2 quick_update
+
+Modifies LDAP entry with distinguished name $dn by replacing the values from $replace.
+Returns DN in case of success.
 
 =cut
 
 sub quick_update {
-	my ($self, $dn, $spec_ref) = @_;
-	my ($mesg);
+    my ($self, $dn, $spec_ref) = @_;
+    my ($mesg);
 
-  # escape DN
+    # escape DN
     $dn = $self->dn_escape($dn);
 
-	Dancer::Logger::debug("LDAP update, dn: ", $dn, "; data: ", $spec_ref);
-	
-	$mesg = $self->modify(dn => $dn, replace => $spec_ref);
+    Dancer::Logger::debug("LDAP update, dn: ", $dn, "; data: ", $spec_ref);
+    
+    $mesg = $self->modify(dn => $dn, replace => $spec_ref);
 
-	if ($mesg->code) {
-		die "LDAP update failed (" . $mesg->code . ") with " . $mesg->error;
-	}
-
-	return $dn;
+    if ($mesg->code) {
+	die "LDAP update failed (" . $mesg->code . ") with " . $mesg->error;
+    }
+    
+    return $dn;
 }
 
 =head2 quick_delete $dn
@@ -296,26 +272,26 @@ Deletes entry given by distinguished name $dn.
 =cut
 
 sub quick_delete {
-	my ($self, $dn) = @_;
-	my ($ldret);
+    my ($self, $dn) = @_;
+    my ($ldret);
 
-  # escape DN
+    # escape DN
     $dn = $self->dn_escape($dn);
 
-	Dancer::Logger::debug("LDAP delete: ", $dn);
+    Dancer::Logger::debug("LDAP delete: ", $dn);
+    
+    $ldret = $self->delete(dn => $dn);
+    
+    if ($ldret->code) {
+	die "LDAP delete failed (" . $ldret->code . ") with " . $ldret->error;
+    }
 
-	$ldret = $self->delete(dn => $dn);
-
-	if ($ldret->code) {
-		die "LDAP delete failed (" . $ldret->code . ") with " . $ldret->error;
-	}
-
-	return 1;
+    return 1;
 }
 
-=head2 rename $old_dn $new_dn
+=head2 rename
 
-Change DN of a LDAP record from $old_dn to $new_dn.
+Change distinguished name (DN) of a LDAP record from $old_dn to $new_dn.
 
 =cut
 
@@ -361,7 +337,7 @@ sub rename {
     return $self->dn_unescape(join(',', $new_rdn, @$old_ref));
 }
 
-=head2 base @rdn
+=head2 base
 
 Returns base DN, optionally prepending relative DN from @rdn.
 
@@ -389,21 +365,21 @@ Rebind with credentials from settings.
 =cut
 
 sub rebind {
-	my ($self) = @_;
-	my ($ldret);
+    my ($self) = @_;
+    my ($ldret);
 
-	Dancer::Logger::debug("LDAP rebind to $self->{dancer_settings}->{bind}.");
+    Dancer::Logger::debug("LDAP rebind to $self->{dancer_settings}->{bind}.");
 	
-	$ldret = $self->bind($self->{dancer_settings}->{bind},
-						 password => $self->{dancer_settings}->{password});
+    $ldret = $self->bind($self->{dancer_settings}->{bind},
+			 password => $self->{dancer_settings}->{password});
 
-	if ($ldret->code) {
-		Dancer::Logger::error('LDAP bind failed (' . $ldret->code . '): '
+    if ($ldret->code) {
+	Dancer::Logger::error('LDAP bind failed (' . $ldret->code . '): '
 							  . $ldret->error);
-		return;
-	}
+	return;
+    }
 
-	return $self;
+    return $self;
 }
 
 =head2 dn_split $dn %options
@@ -474,9 +450,9 @@ sub dn_join {
     return join(',', @out);
 }
 
-=head2 dn_escape $dn
+=head2 dn_escape
 
-Escapes values in DN and returns the altered string.
+Escapes values in DN $dn and returns the altered string.
 
 =cut
 
@@ -486,9 +462,9 @@ sub dn_escape {
     return $self->dn_split($dn);    
 }
 
-=head2 dn_unescape $dn
+=head2 dn_unescape
 
-Unescapes values in DN and returns the altered string.
+Unescapes values in DN $dn and returns the altered string.
 
 =cut
 
@@ -573,6 +549,77 @@ sub _failure {
 
 	die "LDAP $op failed (" . $mesg->code . ") with " . $mesg->error;
 }
+
+# build conditions for LDAP searches
+
+sub _build_conditions {
+    my ($self, $spec_ref) = @_;
+    my ($key, $value, $safe_value, @conds, @sub_conds);
+
+    while (($key, $value) = each(%$spec_ref)) {
+	if ($key eq '-or') {
+	    push @conds, '(|' . join('', $self->_build_conditions($value)) . ')';
+	} elsif (ref($value) eq 'ARRAY') {
+	    # Operator requested
+	    if ($value->[0] eq 'exists') {
+		if ($value->[1]) {
+		    # attribute present
+		    push (@conds, "($key=*)");
+		}
+		else {
+		    # attribute missing
+		    push (@conds, "(!($key=*))");
+		}
+	    }
+	    elsif ($value->[0] eq '!' || $value->[0] eq 'not') {
+		push (@conds, "(!($key=$value->[1]))");
+	    }
+	    elsif ($value->[0] eq 'substr'
+		   || $value->[0] eq 'substring') {
+		push (@conds, "($key=*" . escape_filter_value($value->[1]) . "*)");
+	    }
+	    else {
+		Dancer::Logger::debug("Invalid operator for $key: ", $value);
+					die "Invalid operator $value->[0].";
+	    }
+	}
+	else {
+	    # escape filter value first
+	    $safe_value = escape_filter_value($value);
+	    push (@conds, "($key=$safe_value)");
+	}
+    }
+
+    return @conds;
+}
+
+=head1 DN
+
+Our methods return and expect unescaped DN's.
+
+=head1 AUTHOR
+
+Stefan Hornburg (Racke), <racke@linuxia.de>
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright 2010-2012 Stefan Hornburg (Racke) <racke@linuxia.de>.
+
+This program is free software; you can redistribute it and/or modify it
+under the terms of either: the GNU General Public License as published
+by the Free Software Foundation; or the Artistic License.
+
+See http://dev.perl.org/licenses/ for more information.
+
+=head1 SEE ALSO
+
+L<Dancer::Plugin::LDAP>
+
+L<Dancer>
+
+L<Net::LDAP>
+
+=cut
 
 1;
 
