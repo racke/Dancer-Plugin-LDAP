@@ -113,6 +113,10 @@ sub quick_select {
 			elsif ($value->[0] eq '!' || $value->[0] eq 'not') {
 			    push (@conds, "(!($key=$value->[1]))");
 			}
+			elsif ($value->[0] eq 'substr'
+			       || $value->[0] eq 'substring') {
+			    push (@conds, "($key=*" . escape_filter_value($value->[1]) . "*)");
+			}
 			else {
 				die "Invalid operator $value->[0].";
 			}
