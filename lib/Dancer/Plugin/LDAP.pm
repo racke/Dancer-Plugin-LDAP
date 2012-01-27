@@ -63,6 +63,8 @@ a quick way to do that:
         LDAP:
             uri: 'ldap://127.0.0.1:389/'
             base: 'dc=linuxia,dc=de'
+            bind: cn=admin,dc=linuxia,dc=de
+            password: nevairbe
 
 =cut
 
