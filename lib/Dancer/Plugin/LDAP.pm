@@ -209,6 +209,20 @@ sub _load_ldap_settings { $settings = plugin_setting; }
 
 Stefan Hornburg (Racke), C<< <racke at linuxia.de> >>
 
+=head1 CONTRIBUTING
+
+This module is developed on Github at:
+
+L<https://github.com/racke/Dancer-Plugin-LDAP>
+
+Feel free to fork the repo and submit pull requests!  Also, it makes sense to 
+L<watch the repo|https://github.com/racke/Dancer-Plugin-LDAP/toggle_watch> 
+on GitHub for updates.
+
+Feedback and bug reports are always appreciated.  Even a quick mail to let me
+know the module is useful to you would be very nice - it's nice to know if code
+is being actively used.
+
 =head1 ACKNOWLEDGEMENTS
 
 David Precious for providing the great L<Dancer::Plugin::Database>, which
