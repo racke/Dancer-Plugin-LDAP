@@ -46,6 +46,17 @@ a L<Net::LDAP> handle object, so it does everything you'd expect
 to do with Net::LDAP, but also adds a few convenience methods.  See the documentation
 for L<Dancer::Plugin::LDAP::Handle> for full details of those.
 
+=head2 TEXT SEARCHES
+
+Need to run a text search across your LDAP directory? This plugin provides
+a quick way to do that:
+
+    for (qw/uid sn givenName c l/) {
+	$search{$_} = [substr => $args{search}];
+    }
+
+    @entries = ldap->quick_select({-or => \%search});
+
 =head1 CONFIGURATION
 
     plugins:
