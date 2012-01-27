@@ -245,6 +245,8 @@ sub quick_compare {
 Modifies LDAP entry with distinguished name $dn by replacing the values from $replace.
 Returns DN in case of success.
 
+    ldap->quick_update('uid=racke@linuxia.de,dc=linuxia,dc=de', {l => 'Vienna'});
+
 =cut
 
 sub quick_update {
@@ -265,9 +267,11 @@ sub quick_update {
     return $dn;
 }
 
-=head2 quick_delete $dn
+=head2 quick_delete
 
 Deletes entry given by distinguished name $dn.
+
+    ldap->quick_delete('uid=racke@linuxia.de,dc=linuxia,dc=de');
 
 =cut
 
@@ -600,6 +604,10 @@ Our methods return and expect unescaped DN's.
 =head1 AUTHOR
 
 Stefan Hornburg (Racke), <racke@linuxia.de>
+
+=head1 ACKNOWLEDGEMENTS
+
+See L<Dancer::Plugin::LDAP/ACKNOWLEDGEMENTS>
 
 =head1 LICENSE AND COPYRIGHT
 

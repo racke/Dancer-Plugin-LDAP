@@ -27,7 +27,15 @@ our $VERSION = '0.0001';
     use Dancer::Plugin::LDAP;
 
     # Calling the ldap keyword returns you a LDAP handle
-    
+    $ldap = ldap;
+
+    # Use convenience methods for retrieving, updating and deleting LDAP entries
+    $account = ldap->quick_select({dn => 'uid=racke@linuxia.de,dc=linuxia,dc=de'});
+
+    ldap->quick_update('uid=racke@linuxia.de,dc=linuxia,dc=de', {l => 'Vienna'});
+
+    ldap->quick_delete('uid=racke@linuxia.de,dc=linuxia,dc=de');
+
 =head1 DESCRIPTION
 
 Provides an easy way to obtain a connected LDAP handle by simply calling
@@ -44,8 +52,6 @@ for L<Dancer::Plugin::LDAP::Handle> for full details of those.
         LDAP:
             uri: 'ldap://127.0.0.1:389/'
             base: 'dc=linuxia,dc=de'
-
-=head1 SUBROUTINES/METHODS
 
 =cut
 
@@ -203,14 +209,16 @@ sub _load_ldap_settings { $settings = plugin_setting; }
 
 Stefan Hornburg (Racke), C<< <racke at linuxia.de> >>
 
+=head1 ACKNOWLEDGEMENTS
+
+David Precious for providing the great L<Dancer::Plugin::Database>, which
+helped me a lot in terms of ideas and code to write this plugin.
+
 =head1 BUGS
 
 Please report any bugs or feature requests to C<bug-dancer-plugin-ldap at rt.cpan.org>, or through
 the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Dancer-Plugin-LDAP>.  I will be notified, and then you'll
 automatically be notified of progress on your bug as I make changes.
-
-
-
 
 =head1 SUPPORT
 
