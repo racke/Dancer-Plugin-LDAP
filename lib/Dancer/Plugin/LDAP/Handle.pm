@@ -117,7 +117,7 @@ sub quick_select {
     # compose search parameters
     $table = $self->dn_escape($table);
     
-    @search_args = (base => $table, filter => $filter, @_);
+    @search_args = (base => $table, filter => $filter, @_, @ldap_args);
 
     Dancer::Logger::debug('LDAP search: ', \@search_args);
 	
