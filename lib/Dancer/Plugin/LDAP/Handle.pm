@@ -4,6 +4,7 @@ use strict;
 use Carp;
 use Net::LDAP;
 use Net::LDAP::Util qw(escape_dn_value escape_filter_value ldap_explode_dn);
+use Encode;
 
 use base qw(Net::LDAP);
 
@@ -132,16 +133,18 @@ sub quick_select {
 	for my $attr ( $entry->attributes ) {
 	    if ($opts{values} eq 'asref') {
 		# all attribute values as array reference
-		$token->{$attr} = $entry->get_value($attr, asref => 1);
+		$token->{$attr} = [map {$self->_utf8_decode($_)} @{$entry->get_value($attr, asref => 1)}];
 	    }
 	    elsif ($opts{values} eq 'last') {
 		# last attribute value
 		my $value_ref =  $entry->get_value($attr, asref => 1);
-		$token->{$attr} = defined($value_ref) ? $value_ref->[-1] : undef;
+		$token->{$attr} = defined($value_ref)
+		    ? $self->_utf8_decode($value_ref->[-1])
+		    : undef;
 	    }
 	    else {
 		# first attribute value
-		$token->{$attr} = $entry->get_value($attr);
+		$token->{$attr} = $self->_utf8_decode($entry->get_value($attr));
 	    }
 	}
 		
@@ -595,6 +598,17 @@ sub _build_conditions {
     }
 
     return @conds;
+}
+
+# fix UTF-8 encoding
+sub _utf8_decode {
+    my ($self, $string) = @_;
+
+    unless(Encode::is_utf8($string)){
+	$string = Encode::decode('utf-8', $string);
+    }
+
+    return $string;
 }
 
 =head1 DN
