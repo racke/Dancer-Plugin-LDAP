@@ -2,7 +2,7 @@ NAME
     Dancer::Plugin::LDAP - LDAP plugin for Dancer micro framework
 
 VERSION
-    Version 0.0001
+    Version 0.0002
 
 SYNOPSIS
         use Dancer;
@@ -38,11 +38,17 @@ DESCRIPTION
 
         @entries = ldap->quick_select({-or => \%search});
 
+  UTF-8
+    Attribute values returned by the Dancer::Plugin::LDAP::Handle method are
+    automatically converted to UTF-8 strings.
+
 CONFIGURATION
         plugins:
             LDAP:
                 uri: 'ldap://127.0.0.1:389/'
                 base: 'dc=linuxia,dc=de'
+                bind: cn=admin,dc=linuxia,dc=de
+                password: nevairbe
 
 AUTHOR
     Stefan Hornburg (Racke), `<racke at linuxia.de>'

@@ -1,5 +1,17 @@
 Revision history for Dancer::Plugin::LDAP
 
+0.0002 Wed Feb  1 12:58:41 2012 CET
+
+    [FIXES]
+
+    * Fix UTF-8 encoding on attribute values returned from LDAP search.
+    * Fix passing through of unaccounted parameters in quick_select to
+      Net::LDAP's search method.
+
+    [DOCUMENTATION]
+
+    * Add LDAP bind and password parameters to configuration example.
+
 0.0001 Fri Jan 27 10:03:26 2012 CET
 
     * Initial release.
