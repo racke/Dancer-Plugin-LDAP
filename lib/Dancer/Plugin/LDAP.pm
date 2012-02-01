@@ -57,6 +57,11 @@ a quick way to do that:
 
     @entries = ldap->quick_select({-or => \%search});
 
+=head2 UTF-8
+
+Attribute values returned by the L<Dancer::Plugin::LDAP::Handle/quick_select> method are
+automatically converted to UTF-8 strings.
+
 =head1 CONFIGURATION
 
     plugins:
