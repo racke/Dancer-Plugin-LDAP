@@ -554,7 +554,13 @@ sub _failure {
 		}
 	}
 
-	die "LDAP $op failed (" . $mesg->code . ") with " . $mesg->error;
+	my $errmsg = "LDAP $op failed (" . $mesg->code . ") with " . $mesg->error;
+
+	if ($mesg->dn) {
+		$errmsg .= ' (DN: ' . $mesg->dn . ')';
+        }
+
+	die $errmsg;
 }
 
 # build conditions for LDAP searches
