@@ -1,5 +1,13 @@
 Revision history for Dancer::Plugin::LDAP
 
+0.0010 Fri Jul 13 14:56:37 2012 CEST
+
+    [ENHANCEMENTS]
+
+    * Use Net::LDAP's socket method to determine whether the LDAP
+      connnection is still alive.
+    * Add dn property of LDAP message object to failure message if present.
+
 0.0002 Wed Feb  1 12:58:41 2012 CET
 
     [FIXES]

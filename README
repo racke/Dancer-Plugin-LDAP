@@ -2,7 +2,7 @@ NAME
     Dancer::Plugin::LDAP - LDAP plugin for Dancer micro framework
 
 VERSION
-    Version 0.0002
+    Version 0.0010
 
 SYNOPSIS
         use Dancer;
