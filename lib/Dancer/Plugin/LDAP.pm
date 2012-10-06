@@ -14,11 +14,11 @@ Dancer::Plugin::LDAP - LDAP plugin for Dancer micro framework
 
 =head1 VERSION
 
-Version 0.0010
+Version 0.0020
 
 =cut
 
-our $VERSION = '0.0010';
+our $VERSION = '0.0020';
 
 
 =head1 SYNOPSIS
