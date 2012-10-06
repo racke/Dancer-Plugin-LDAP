@@ -78,7 +78,7 @@ my %handles;
 my $def_handle = {};
 
 register ldap => sub {
-	my $arg = shift;
+	my ($self, $arg) = plugin_args;
 
 	_load_ldap_settings() unless $settings;
 	
@@ -150,7 +150,7 @@ register ldap => sub {
     }
 };
 
-register_plugin;
+register_plugin for_versions => [ 1, 2 ];
 
 # Try to establish a LDAP connection based on the given settings
 sub _get_connection {
