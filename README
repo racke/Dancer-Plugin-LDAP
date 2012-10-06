@@ -2,7 +2,7 @@ NAME
     Dancer::Plugin::LDAP - LDAP plugin for Dancer micro framework
 
 VERSION
-    Version 0.0010
+    Version 0.0020
 
 SYNOPSIS
         use Dancer;
@@ -27,6 +27,8 @@ DESCRIPTION
     Net::LDAP, but also adds a few convenience methods. See the
     documentation for Dancer::Plugin::LDAP::Handle for full details of
     those.
+
+    This plugin is compatible to Dancer 1 and Dancer 2.
 
   TEXT SEARCHES
     Need to run a text search across your LDAP directory? This plugin

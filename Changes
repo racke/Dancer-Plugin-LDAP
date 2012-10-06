@@ -1,5 +1,11 @@
 Revision history for Dancer::Plugin::LDAP
 
+0.0020 Sat Oct  6 14:36:08 2012 CEST
+
+    [ENHANCEMENTS]
+
+    * Compatible to Dancer 1 and Dancer 2.
+
 0.0010 Fri Jul 13 14:56:37 2012 CEST
 
     [ENHANCEMENTS]
