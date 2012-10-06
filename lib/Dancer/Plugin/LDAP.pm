@@ -46,6 +46,8 @@ a L<Net::LDAP> handle object, so it does everything you'd expect
 to do with Net::LDAP, but also adds a few convenience methods.  See the documentation
 for L<Dancer::Plugin::LDAP::Handle> for full details of those.
 
+This plugin is compatible to Dancer 1 and Dancer 2.
+
 =head2 TEXT SEARCHES
 
 Need to run a text search across your LDAP directory? This plugin provides
