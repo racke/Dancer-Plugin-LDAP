@@ -2,7 +2,7 @@ NAME
     Dancer::Plugin::LDAP - LDAP plugin for Dancer micro framework
 
 VERSION
-    Version 0.0020
+    Version 0.0030
 
 SYNOPSIS
         use Dancer;
@@ -71,6 +71,8 @@ ACKNOWLEDGEMENTS
     David Precious for providing the great Dancer::Plugin::Database, which
     helped me a lot in terms of ideas and code to write this plugin.
 
+    Marco Pessotto for fixing update of attributes with empty value.
+
 BUGS
     Please report any bugs or feature requests to `bug-dancer-plugin-ldap at
     rt.cpan.org', or through the web interface at
@@ -101,7 +103,7 @@ SUPPORT
     <irc.perl.org>.
 
 LICENSE AND COPYRIGHT
-    Copyright 2011-2012 Stefan Hornburg (Racke).
+    Copyright 2011-2013 Stefan Hornburg (Racke).
 
     This program is free software; you can redistribute it and/or modify it
     under the terms of either: the GNU General Public License as published
