@@ -245,7 +245,10 @@ sub quick_compare {
 
 =head2 quick_update
 
-Modifies LDAP entry with distinguished name $dn by replacing the values from $replace.
+Modifies LDAP entry with distinguished name $dn by replacing the
+values from $replace. If the value is the empty string, delete the
+attribute.
+
 Returns DN in case of success.
 
     ldap->quick_update('uid=racke@linuxia.de,dc=linuxia,dc=de', {l => 'Vienna'});
@@ -259,9 +262,23 @@ sub quick_update {
     # escape DN
     $dn = $self->dn_escape($dn);
 
-    Dancer::Logger::debug("LDAP update, dn: ", $dn, "; data: ", $spec_ref);
-    
-    $mesg = $self->modify(dn => $dn, replace => $spec_ref);
+    # do a shallow copy of the hashref
+    my $spec_copy = { %$spec_ref };
+    if ($spec_copy and (ref($spec_copy) eq 'HASH')) {
+ 
+        # check if there are empty values passed
+        while (my ($k, $v) = each %$spec_copy) {
+            if ((ref($v) eq '') and ($v eq '')) {
+                # in case replace them with an empty array ref to delete them
+                $spec_copy->{$k} = [];
+                Dancer::Logger::debug("$k is empty, replaced with []");
+            }
+        }
+    }
+
+    Dancer::Logger::debug("LDAP update, dn: ", $dn, "; data: ", $spec_copy);
+
+    $mesg = $self->modify(dn => $dn, replace => $spec_copy);
 
     if ($mesg->code) {
 	die "LDAP update failed (" . $mesg->code . ") with " . $mesg->error;
