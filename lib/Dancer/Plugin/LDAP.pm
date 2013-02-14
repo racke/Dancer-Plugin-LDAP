@@ -252,6 +252,8 @@ is being actively used.
 David Precious for providing the great L<Dancer::Plugin::Database>, which
 helped me a lot in terms of ideas and code to write this plugin.
 
+Marco Pessotto for fixing update of attributes with empty value.
+
 =head1 BUGS
 
 Please report any bugs or feature requests to C<bug-dancer-plugin-ldap at rt.cpan.org>, or through
