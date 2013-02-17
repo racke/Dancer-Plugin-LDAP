@@ -177,11 +177,25 @@ Adds an entry to LDAP directory.
 =cut
 
 sub quick_insert {
-    my ($self, $dn, $ref, %opts) = @_;
+    my ($self, $dn, $origref, %opts) = @_;
     my ($mesg);
 
     # escape DN
     $dn = $self->dn_escape($dn);
+
+    # shallow copy of the ref
+    my $ref = { %$origref };
+
+    # sanitarize the hash, LDAP *hates* empty strings
+    foreach my $k (keys %$ref) {
+        my $value = $ref->{$k};
+        if ((not defined $value) or
+            ((ref($value) eq '') and ($value eq ''))) {
+            # if not defined or an empty string, delete the key
+            Dancer::Logger::debug("$k is empty, ignoring");
+            delete $ref->{$k};
+        }
+    }
 
     Dancer::Logger::debug("LDAP insert, dn: ", $dn, "; data: ", $ref);
 	
