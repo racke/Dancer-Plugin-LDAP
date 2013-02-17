@@ -128,7 +128,7 @@ sub quick_select {
 	my $token = {};
 	my $entry = $mesg->entry($i);
 	
-	$token->{dn} = $self->dn_unescape($entry->dn);
+	$token->{dn} = $self->_utf8_decode($self->dn_unescape($entry->dn));
 	
 	for my $attr ( $entry->attributes ) {
 	    if ($opts{values} eq 'asref') {
