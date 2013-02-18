@@ -8,7 +8,7 @@ use Encode;
 
 use base qw(Net::LDAP);
 
-our $VERSION = '0.0020';
+our $VERSION = '0.0040';
 
 =head1 NAME
 
