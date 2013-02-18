@@ -174,6 +174,9 @@ Adds an entry to LDAP directory.
          objectClass => [qw/top person organizationalPerson inetOrgPerson/],
         }
 
+The fields which hold empty strings or undefined values will not be inserted,
+but just ignored.
+
 =cut
 
 sub quick_insert {
@@ -184,17 +187,14 @@ sub quick_insert {
     $dn = $self->dn_escape($dn);
 
     # shallow copy of the ref
-    my $ref = { %$origref };
-
-    # sanitarize the hash, LDAP *hates* empty strings
-    foreach my $k (keys %$ref) {
-        my $value = $ref->{$k};
-        if ((not defined $value) or
-            ((ref($value) eq '') and ($value eq ''))) {
-            # if not defined or an empty string, delete the key
-            Dancer::Logger::debug("$k is empty, ignoring");
-            delete $ref->{$k};
-        }
+    my $ref = {};
+    # sanitize the hash, LDAP *hates* empty strings
+    while (my ($k, $value) =  each %$origref) {
+        # ignore undefined values
+        next unless defined $value;
+        # ignore empty strings
+        next if ((ref($value) eq '') and ($value eq ''));
+        $ref->{$k} = $value;
     }
 
     Dancer::Logger::debug("LDAP insert, dn: ", $dn, "; data: ", $ref);
