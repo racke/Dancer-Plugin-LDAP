@@ -1,5 +1,13 @@
 Revision history for Dancer::Plugin::LDAP
 
+0.0040 Mon Feb 18 09:45:41 2013 CET
+
+    [BUG FIXES]
+
+    * GH #2: Don't pass empty values to LDAP from quick_insert method
+      (Marco Pessotto).
+    * Decode UTF-8 inside DN's retrieved from LDAP (Marco Pessotto).
+
 0.0030 Thu Feb 14 10:48:30 2013 CET
 
     [BUG FIXES]
