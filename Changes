@@ -1,5 +1,11 @@
 Revision history for Dancer::Plugin::LDAP
 
+0.0050 Thu Sep  5 12:55:11 2013 CEST
+
+    [ENHANCEMENTS]
+
+    * Add support for comparison operators (<, <=, >, >=).
+
 0.0040 Mon Feb 18 09:45:41 2013 CET
 
     [BUG FIXES]
