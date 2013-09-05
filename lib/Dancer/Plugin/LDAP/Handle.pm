@@ -622,6 +622,12 @@ sub _build_conditions {
 		   || $value->[0] eq 'substring') {
 		push (@conds, "($key=*" . escape_filter_value($value->[1]) . "*)");
 	    }
+        elsif ($value->[0] eq '<'
+               || $value->[0] eq '<='
+               || $value->[0] eq '>'
+               || $value->[0] eq '>=') {
+            push (@conds, "($key$value->[0]" . escape_filter_value($value->[1]) . ')');
+        }
 	    else {
 		Dancer::Logger::debug("Invalid operator for $key: ", $value);
 					die "Invalid operator $value->[0].";
