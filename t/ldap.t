@@ -8,12 +8,15 @@ use Data::Dumper;
 
 use Dancer qw/:tests/;
 use Dancer::Plugin::LDAP;
-set logger => 'console';
+
+use Dancer::Test;
+
+set logger => 'capture';
 set log => 'debug';
 
 my $conffile = File::Spec->catfile(t => 'ldap.conf');
 if (-f $conffile) {
-    plan tests => 8;
+    plan tests => 9;
 }
 else {
     plan skip_all => 'No configuration file found, probably test box is down';
@@ -39,4 +42,30 @@ my $res = ldap->bind('cn=stuart,OU=users,DC=testathon,DC=net',
 
 ok($res->code, "Found error code: ". $res->code);
 ok($res->error, "Found error:" . $res->error);
-ok(!ldap("not existent connection"));
+ok(!ldap("not existent connection"), "Wrong connection yields undef");
+ldap->dancer_debug("Hey", "ho", "let's go");
+ldap->dancer_error("Error", "found");
+
+my $expected_logs = [
+                     {
+                      'level' => 'debug',
+                      'message' => 'LDAP search: [\'base\',\'DC=testathon,DC=net\',\'filter\',\'(cn=stuart)\']'
+                     },
+                     {
+                      'level' => 'debug',
+                      'message' => 'LDAP rebind to cn=stuart,OU=users,DC=testathon,DC=net.'
+                     },
+                     {
+                      'level' => 'error',
+                      'message' => 'No LDAP settings for not existent connection'
+                     },
+                     {
+                      'level' => 'debug',
+                      'message' => 'Heyholet\'s go'
+                     },
+                     {
+                      'level' => 'error',
+                      'message' => 'Errorfound'
+                     }
+                    ];
+is_deeply(read_logs, $expected_logs, "Logging appears ok");

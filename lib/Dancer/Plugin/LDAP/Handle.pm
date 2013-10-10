@@ -120,7 +120,7 @@ sub quick_select {
     
     @search_args = (base => $table, filter => $filter, @_, @ldap_args);
 
-    Dancer::Logger::debug('LDAP search: ', \@search_args);
+    $self->dancer_debug('LDAP search: ', \@search_args);
 	
     $mesg = $self->search(@search_args);
 
@@ -197,7 +197,7 @@ sub quick_insert {
         $ref->{$k} = $value;
     }
 
-    Dancer::Logger::debug("LDAP insert, dn: ", $dn, "; data: ", $ref);
+    $self->dancer_debug("LDAP insert, dn: ", $dn, "; data: ", $ref);
 	
     $mesg = $self->add($dn, attr => [%$ref]);
 
@@ -285,12 +285,12 @@ sub quick_update {
             if ((ref($v) eq '') and ($v eq '')) {
                 # in case replace them with an empty array ref to delete them
                 $spec_copy->{$k} = [];
-                Dancer::Logger::debug("$k is empty, replaced with []");
+                $self->dancer_debug("$k is empty, replaced with []");
             }
         }
     }
 
-    Dancer::Logger::debug("LDAP update, dn: ", $dn, "; data: ", $spec_copy);
+    $self->dancer_debug("LDAP update, dn: ", $dn, "; data: ", $spec_copy);
 
     $mesg = $self->modify(dn => $dn, replace => $spec_copy);
 
@@ -316,7 +316,7 @@ sub quick_delete {
     # escape DN
     $dn = $self->dn_escape($dn);
 
-    Dancer::Logger::debug("LDAP delete: ", $dn);
+    $self->dancer_debug("LDAP delete: ", $dn);
     
     $ldret = $self->delete(dn => $dn);
     
@@ -359,7 +359,7 @@ sub rename {
 
     $old_escaped = join(',', @$old_ref);
 
-    Dancer::Logger::debug("LDAP rename from $old_escaped to $new_rdn.");
+    $self->dancer_debug("LDAP rename from $old_escaped to $new_rdn.");
 
     # change distinguished name
     $ldret = $self->moddn ($old_escaped, newrdn => $new_rdn);
@@ -406,13 +406,13 @@ sub rebind {
     my ($self) = @_;
     my ($ldret);
 
-    Dancer::Logger::debug("LDAP rebind to $self->{dancer_settings}->{bind}.");
+    $self->dancer_debug("LDAP rebind to $self->{dancer_settings}->{bind}.");
 	
     $ldret = $self->bind($self->{dancer_settings}->{bind},
 			 password => $self->{dancer_settings}->{password});
 
     if ($ldret->code) {
-	Dancer::Logger::error('LDAP bind failed (' . $ldret->code . '): '
+	$self->dancer_error('LDAP bind failed (' . $ldret->code . '): '
 							  . $ldret->error);
 	return;
     }
@@ -629,7 +629,7 @@ sub _build_conditions {
             push (@conds, "($key$value->[0]" . escape_filter_value($value->[1]) . ')');
         }
 	    else {
-		Dancer::Logger::debug("Invalid operator for $key: ", $value);
+		$self->dancer_debug("Invalid operator for $key: ", $value);
 					die "Invalid operator $value->[0].";
 	    }
 	}
@@ -653,6 +653,45 @@ sub _utf8_decode {
 
     return $string;
 }
+
+=head2 Dancer related methods
+
+Used internally for logging. They will call the corresponding coderefs
+stored in the object or issue a C<warn> if the coderef is not found
+(this probably means you have to fix your code).
+
+=over 4
+
+=item dancer_debug
+
+=item dancer_error
+
+=back
+
+=cut
+
+sub dancer_debug {
+    my ($self, @args) = @_;
+    $self->_dancer_logging(debug => @args);
+}
+
+sub dancer_error {
+    my ($self, @args) = @_;
+    $self->_dancer_logging(error => @args);
+}
+
+sub _dancer_logging {
+    my ($self, $level, @args) = @_;
+    my $coderef = $self->{"dancer_$level"};
+    if ($coderef) {
+        return $coderef->(@args);
+    }
+    else {
+        warn "No $level coderef found!";
+        warn join(" ", @args);
+    }
+}
+
 
 =head1 DN
 

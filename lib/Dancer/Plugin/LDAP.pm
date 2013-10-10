@@ -172,7 +172,17 @@ sub _get_connection {
 							  . $ldret->error);
 		return;
 	}
-	
+
+    # store the coderefs for logging in the object, so we can have an
+    # Handle Dancer-agnostic.
+    $ldap->{dancer_debug} = sub {
+        my @args = @_;
+        Dancer::Logger::debug(@args);
+    };
+    $ldap->{dancer_error} = sub {
+        my @args = @_;
+        Dancer::Logger::error(@args);
+    };
 	# pass reference to the settings
 	$ldap->{dancer_settings} = $settings;
 	
