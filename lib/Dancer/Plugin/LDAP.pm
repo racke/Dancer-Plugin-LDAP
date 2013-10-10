@@ -80,7 +80,7 @@ my %handles;
 my $def_handle = {};
 
 register ldap => sub {
-	my ($self, $arg) = plugin_args;
+	my ($self, $arg) = plugin_args(@_);
 
 	_load_ldap_settings() unless $settings;
 	
