@@ -19,4 +19,15 @@ WriteMakefile(
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'Dancer-Plugin-LDAP-*' },
+    META_MERGE => {
+        'meta-spec' => { version => 2 },
+        resources => {
+            repository => {
+                type => 'git',
+                url  => 'https://github.com/racke/Dancer-Plugin-LDAP.git',
+                web  => 'https://github.com/racke/Dancer-Plugin-LDAP',
+                bugtracker  => 'http://github.com/racke/Dancer-Plugin-LDAP/issues',
+            },
+        },
+    },
 );
