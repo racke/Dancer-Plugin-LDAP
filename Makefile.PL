@@ -26,6 +26,7 @@ WriteMakefile(
                 type => 'git',
                 url  => 'https://github.com/racke/Dancer-Plugin-LDAP.git',
                 web  => 'https://github.com/racke/Dancer-Plugin-LDAP',
+                bugtracker  => 'http://github.com/racke/Dancer-Plugin-LDAP/issues',
             },
         },
     },
